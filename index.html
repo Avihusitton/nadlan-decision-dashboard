@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מערכת תומכת החלטה: אשקלון, טירת הכרמל ורתמים</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --background: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --card-border: #334155;
+      --foreground: #f8fafc;
+      --muted-foreground: #94a3b8;
+      --primary: #38bdf8;
+      --primary-foreground: #0f172a;
+      --secondary: #334155;
+      --secondary-foreground: #e2e8f0;
+      --success: #4ade80;
+      --warning: #fbbf24;
+      --error: #f87171;
+      --link: #38bdf8;
+    }
+    html.light {
+      --background: #f8fafc;
+      --card: #ffffff;
+      --border: #cbd5e1;
+      --card-border: #e2e8f0;
+      --foreground: #0f172a;
+      --muted-foreground: #475569;
+      --primary: #0284c7;
+      --primary-foreground: #ffffff;
+      --secondary: #f1f5f9;
+      --secondary-foreground: #0f172a;
+      --success: #16a34a;
+      --warning: #d97706;
+      --error: #dc2626;
+      --link: #0284c7;
+    }
+    * { box-sizing: border-box; }
+    input[type="range"] { cursor: pointer; }
+    .tab-btn.active {
+      background-color: var(--primary);
+      color: var(--primary-foreground);
+      font-weight: 600;
+    }
+    .flow-node { transition: all 0.18s ease; }
+    .flow-node:hover { transform: translateY(-1px); }
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-[var(--background)] text-[var(--foreground)] antialiased p-4 md:p-6 m-0">
+
+  <!-- Header -->
+  <header class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 md:p-5 mb-5">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2 text-xs text-[var(--muted-foreground)] mb-1">
+          <span class="px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)] font-medium">מודל אנליטי ומיסויי v4</span>
+          <span>•</span>
+          <span>אופק ניתוח: 12/2026 – 06/2030</span>
+        </div>
+        <h1 class="text-lg md:text-xl font-bold text-[var(--foreground)]">
+          מערכת החלטה אינטראקטיבית: אשקלון (הקונכיה 20) • טירת הכרמל (הכלניות 17) • רתמים (מגרש 324)
+        </h1>
+      </div>
+      <div class="flex flex-wrap gap-2 no-print">
+        <button onclick="document.documentElement.classList.toggle('light')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90 transition">
+          🌓 החלף ערכת נושא (כהה/בהיר)
+        </button>
+        <button onclick="switchTab('costs')" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90 transition">
+          💰 פירוט עלויות ורווח/הפסד לכל דירה
+        </button>
+        <button onclick="switchTab('lawyer')" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--primary)] text-[var(--primary)] hover:opacity-90 transition">
+          ⚖️ עמוד עו"ד (מוכן לשליחה)
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex flex-wrap gap-1.5 mt-4 pt-3 border-t border-[var(--card-border)] no-print">
+      <button id="tab-btn-sim" onclick="switchTab('sim')" class="tab-btn active px-3 py-2 rounded-lg text-xs transition bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+        📊 1. סימולטור פיננסי חי
+      </button>
+      <button id="tab-btn-costs" onclick="switchTab('costs')" class="tab-btn px-3 py-2 rounded-lg text-xs transition bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+        💰 2. תחשיב עלות ורווח/הפסד לכל דירה
+      </button>
+      <button id="tab-btn-flow" onclick="switchTab('flow')" class="tab-btn px-3 py-2 rounded-lg text-xs transition bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+        🔀 3. תרשים זרימה שלב-אחר-שלב
+      </button>
+      <button id="tab-btn-timeline" onclick="switchTab('timeline')" class="tab-btn px-3 py-2 rounded-lg text-xs transition bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+        📅 4. ציר זמן ומוקשים (2026–2030)
+      </button>
+      <button id="tab-btn-market" onclick="switchTab('market')" class="tab-btn px-3 py-2 rounded-lg text-xs transition bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+        🏙️ 5. מודיעין שוק (הכלניות ואשקלון)
+      </button>
+      <button id="tab-btn-lawyer" onclick="switchTab('lawyer')" class="tab-btn px-3 py-2 rounded-lg text-xs transition bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+        ⚖️ 6. עמוד ייעודי לעו"ד
+      </button>
+    </nav>
+  </header>
+
+  <!-- ==================== TAB 1: INTERACTIVE SIMULATOR ==================== -->
+  <section id="tab-sim" class="space-y-5">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <!-- Controls Panel -->
+      <div class="lg:col-span-5 bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-4">
+        <div class="flex items-center justify-between border-b border-[var(--card-border)] pb-2">
+          <h2 class="text-sm font-bold">🎛️ פרמטרים למשחק ורגישות (הזז כדי לעדכן)</h2>
+          <button onclick="resetSliders()" class="text-xs text-[var(--link)] hover:underline">איפוס לתרחיש בסיס</button>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-[var(--muted-foreground)]">שווי מכירת אשקלון (הקונכיה 20, 4 חד׳ נוף לים):</span>
+            <span id="val-ash-price" class="font-mono font-bold text-[var(--foreground)]">2,100,000 ₪</span>
+          </div>
+          <input id="inp-ash-price" type="range" min="1900000" max="2350000" step="25000" value="2100000" oninput="updateSim()" class="w-full accent-[var(--primary)]" />
+          <div class="flex justify-between text-xs text-[var(--muted-foreground)]">
+            <span>פסימי: 1.95M</span>
+            <span>בסיס: 2.10M</span>
+            <span>אופטימי: 2.25M+</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-[var(--muted-foreground)]">שווי מכירת טירת הכרמל (הכלניות 17, קומה 8):</span>
+            <span id="val-tc-price" class="font-mono font-bold text-[var(--foreground)]">2,100,000 ₪</span>
+          </div>
+          <input id="inp-tc-price" type="range" min="1900000" max="2500000" step="25000" value="2100000" oninput="updateSim()" class="w-full accent-[var(--primary)]" />
+          <div class="flex justify-between text-xs text-[var(--muted-foreground)]">
+            <span>מזומן היום: 1.98M</span>
+            <span>איזון בכיס: 2.185M</span>
+            <span>תקרת 0 מס: 2.325M</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-[var(--muted-foreground)]">ריבית מימון / משכנתת בנייה ברתמים (שנתי):</span>
+            <span id="val-rate" class="font-mono font-bold text-[var(--foreground)]">4.3%</span>
+          </div>
+          <input id="inp-rate" type="range" min="3.0" max="6.0" step="0.1" value="4.3" oninput="updateSim()" class="w-full accent-[var(--primary)]" />
+          <div class="flex justify-between text-xs text-[var(--muted-foreground)]">
+            <span>נמוכה: 3.5%</span>
+            <span>בסיס: 4.3%</span>
+            <span>ריבית בנייה עצמית: 5.5%</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <span class="text-[var(--muted-foreground)]">שכירות חודשית צפויה בטירת הכרמל (מ-03/2028):</span>
+            <span id="val-tc-rent" class="font-mono font-bold text-[var(--foreground)]">5,000 ₪</span>
+          </div>
+          <input id="inp-tc-rent" type="range" min="4200" max="6000" step="100" value="5000" oninput="updateSim()" class="w-full accent-[var(--primary)]" />
+          <div class="flex justify-between text-xs text-[var(--muted-foreground)]">
+            <span>4,200 ₪</span>
+            <span>בסיס: 5,000 ₪</span>
+            <span>ביקוש מפוני פינוי-בינוי: 5,600 ₪</span>
+          </div>
+        </div>
+
+        <div class="space-y-1 pt-2 border-t border-[var(--card-border)]">
+          <div class="flex justify-between text-xs">
+            <span class="text-[var(--muted-foreground)]">חודשי גרייס חלקי (דחיית מכירת אשקלון אחרי 01/2028):</span>
+            <span id="val-grace-months" class="font-mono font-bold text-[var(--foreground)]">8 חודשים (עד 09/2028)</span>
+          </div>
+          <input id="inp-grace-months" type="range" min="0" max="14" step="1" value="8" oninput="updateSim()" class="w-full accent-[var(--primary)]" />
+          <div class="flex justify-between text-xs text-[var(--muted-foreground)]">
+            <span>0 (מכירה ב-01/2028)</span>
+            <span>8 (מכירה ב-09/2028)</span>
+            <span>14 (דדליין חוקי 03/2029)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI & Live Insights Panel -->
+      <div class="lg:col-span-7 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="bg-[var(--card)] border-2 border-[var(--primary)] rounded-xl p-3.5">
+            <div class="text-xs text-[var(--muted-foreground)]">🏆 החלופה המנצחת (הון נטו ב-09/2029)</div>
+            <div id="kpi-winner-title" class="text-sm font-bold text-[var(--primary)] mt-1">חלופה 3א: מכירה כפולה (01/28 + 03/28)</div>
+            <div id="kpi-winner-equity" class="text-xl font-mono font-bold mt-1">1,589,509 ₪</div>
+            <div id="kpi-winner-diff" class="text-xs text-[var(--success)] mt-1">+45,485 ₪ יותר מהמתנת 18 חודשים (1ב)</div>
+          </div>
+
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3.5">
+            <div class="text-xs text-[var(--muted-foreground)]">💵 רווח/הפסד אמיתי בכיס על טירת כרמל</div>
+            <div id="kpi-tc-cash-pnl" class="text-xl font-mono font-bold text-[var(--warning)] mt-1">-77,336 ₪</div>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">
+              עלות אמיתית מהכיס: <span class="font-mono font-semibold text-[var(--foreground)]">2,159,336 ₪</span> (לפני מכירה)
+            </div>
+            <div id="kpi-tc-tax-note" class="text-xs text-[var(--success)] mt-0.5">ומס שבח: 0 ₪ (מגן מס 2,325,090 ₪)!</div>
+          </div>
+
+          <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-3.5">
+            <div class="text-xs text-[var(--muted-foreground)]">🎉 רווח הון פטור ממס באשקלון</div>
+            <div id="kpi-ash-gain" class="text-xl font-mono font-bold text-[var(--success)] mt-1">+1,082,405 ₪</div>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">
+              נרכשה ב-<span class="font-mono">1,017,595 ₪</span> | מס שבח: <span class="font-mono font-bold text-[var(--success)]">0 ₪</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
+              🔍 ניתוח תזרים "גרייס חלקי" מול הכנסות שכירות (לאחר מסירת טירת הכרמל ב-03/2028)
+            </h3>
+            <span class="text-xs px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)]">כולל שתי השכירויות</span>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+            <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--card-border)]">
+              <div class="text-xs text-[var(--muted-foreground)]">הכנסות שכ"ד משתי הדירות יחד:</div>
+              <div id="grace-total-rent" class="text-base font-mono font-bold text-[var(--success)] mt-0.5">+10,250 ₪ / חודש</div>
+              <div id="grace-rent-breakdown" class="text-xs text-[var(--muted-foreground)]">אשקלון: 5,250 ₪ + טירת כרמל: 5,000 ₪</div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--card-border)]">
+              <div class="text-xs text-[var(--muted-foreground)]">ריבית גרייס כוללת על החוב הכפול (~2.62M ₪):</div>
+              <div id="grace-total-interest" class="text-base font-mono font-bold text-[var(--warning)] mt-0.5">-9,482 ₪ / חודש</div>
+              <div class="text-xs text-[var(--muted-foreground)]">תשלום ריבית בלבד (ללא החזר קרן)</div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-[var(--background)] border border-[var(--card-border)]">
+              <div class="text-xs text-[var(--muted-foreground)]">עלות שולית נטו של דחיית מכירת אשקלון:</div>
+              <div id="grace-marginal-loss" class="text-base font-mono font-bold text-[var(--error)] mt-0.5">-2,181 ₪ / חודש</div>
+              <div class="text-xs text-[var(--muted-foreground)]">ריבית על 2.07M ₪ חוב שנמנע פחות 5,250 ₪ שכ"ד</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold">השוואת 6 החלופות — הון עצמי נטו בסוף התקופה (09/2029) ופירוט "כסף שרוף"</h3>
+            <span class="text-xs text-[var(--muted-foreground)]">כולל ריביות, מסים, קנס מענק ועלויות עסקה</span>
+          </div>
+          <div id="scenarios-bars" class="space-y-3"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== TAB 2: COST BREAKDOWN PER APARTMENT ==================== -->
+  <section id="tab-costs" class="hidden space-y-5">
+    <!-- Top Explanation Banner: Why you did NOT lose 250K ILS! -->
+    <div class="bg-[var(--card)] border-2 border-[var(--success)] rounded-xl p-4 md:p-5 space-y-2">
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-[var(--success)] text-[var(--background)]">פתרון החידה החשבונאית</span>
+        <h2 class="text-base md:text-lg font-bold">למה ממש לא הפסדת 250,000 ₪ על טירת הכרמל? (הפער בין "כסף מהכיס" לבין "מגן מס שבח")</h2>
+      </div>
+      <p class="text-xs md:text-sm text-[var(--muted-foreground)] leading-relaxed">
+        המספר <strong class="font-mono text-[var(--foreground)]">2,325,090 ₪</strong> שמופיע במודל <strong>אינו סכום ששילמת או שתשלם מכיסך!</strong>
+        זהו <strong>"שווי הרכישה המשוערך לצורכי מס שבח בלבד"</strong> (לפי סעיף 47 לחוק מיסוי מקרקעין).
+        מכיוון שבחוזה שלך עם מ. אור פסגות קיבלת <strong>פטור מלא (0%) ממדד תשומות הבנייה</strong> ו<strong>סבסוד מלא של ריבית הלוואת הקבלן (1,498,000 ₪)</strong>, העלות האמיתית שיוצאת מכיסך לרכישת טירת הכרמל היא רק <strong class="font-mono text-[var(--foreground)]">2,159,336 ₪</strong>!
+        אבל כשרשות המסים מחשבת לך מס שבח במכירה, החוק מחייב אותה להצמיד את ה-1,712,000 ₪ ששולמו לקבלן ב-2024 למדד המחירים לצרכן עד מרץ 2028 — מה שמעניק לך <strong>מגן מס וירטואלי בחינם של <span class="font-mono">+139,515 ₪</span> שלא שילמת מעולם!</strong>
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Apartment 1: Tirat Carmel Full Breakdown -->
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 md:p-5 space-y-4">
+        <div class="border-b border-[var(--card-border)] pb-2">
+          <h3 class="text-base font-bold text-[var(--primary)]">🏢 דירה 1: טירת הכרמל (הכלניות 17, דירה 39, קומה 8)</h3>
+          <p class="text-xs text-[var(--muted-foreground)]">פירוט מדויק של כל שקל שיוצא מהכיס מול תחשיב מגן המס</p>
+        </div>
+
+        <!-- Actual Cash Cost -->
+        <div class="space-y-2 text-xs">
+          <div class="font-bold text-sm">א. עלות תזרימית אמיתית מהכיס (Cash Out-of-Pocket):</div>
+          <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)] space-y-1.5">
+            <div class="flex justify-between">
+              <span>1. הון עצמי ששולם בחתימה (10% ביום 01/09/2024):</span>
+              <span class="font-mono font-bold">214,000 ₪</span>
+            </div>
+            <div class="flex justify-between">
+              <span>2. הלוואת קבלן מסובסדת (70% ביום 30/12/2024):</span>
+              <span class="font-mono font-bold">1,498,000 ₪</span>
+            </div>
+            <div class="flex justify-between">
+              <span>3. יתרת 20% לתשלום במסירה (01/03/2028 לפי מע"מ 17%):</span>
+              <span class="font-mono font-bold">428,000 ₪</span>
+            </div>
+            <div class="flex justify-between text-[var(--success)]">
+              <span>4. הצמדה למדד תשומות הבנייה (סעיף 80 לנספח השינויים):</span>
+              <span class="font-mono font-bold">0 ₪ (פטור מלא!)</span>
+            </div>
+            <div class="flex justify-between text-[var(--success)]">
+              <span>5. ריבית הלוואת קבלן עד 12/2027 (נספח יג׳):</span>
+              <span class="font-mono font-bold">0 ₪ (מסובסד 100%!)</span>
+            </div>
+            <div class="flex justify-between pt-1 border-t border-[var(--card-border)]">
+              <span>6. הפרש 1% מע"מ (מ-17% ל-18%) רק על יתרת ה-428,000 ₪:</span>
+              <span class="font-mono">3,658 ₪</span>
+            </div>
+            <div class="flex justify-between">
+              <span>7. מס רכישה ששולם כמשפר דיור (04/11/2024, שומה 108245017):</span>
+              <span class="font-mono">5,655 ₪</span>
+            </div>
+            <div class="flex justify-between">
+              <span>8. שכ"ט עו"ד קבלן ששולם (01/09/2024, קבלה י. גרינברג):</span>
+              <span class="font-mono">6,523 ₪</span>
+            </div>
+            <div class="flex justify-between">
+              <span>9. חיבור מונים (מים/חשמל) במסירה (אומדן):</span>
+              <span class="font-mono">3,500 ₪</span>
+            </div>
+            <div class="flex justify-between pt-2 border-t-2 border-[var(--border)] text-sm font-bold text-[var(--primary)]">
+              <span>סה"כ עלות רכישה אמיתית מהכיס עד מפתח:</span>
+              <span class="font-mono">2,159,336 ₪</span>
+            </div>
+          </div>
+
+          <!-- Selling & Bridge Cost if Sold in 03/2028 -->
+          <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)] space-y-1.5">
+            <div class="font-bold">תוספת עלויות אם מוכרים את הדירה בטופס 4 (03/2028):</div>
+            <div class="flex justify-between">
+              <span>ריבית גישור קצרה (12/2027 עד 03/2028):</span>
+              <span class="font-mono">~7,500 ₪</span>
+            </div>
+            <div class="flex justify-between">
+              <span>הוצאות מכירה ללא מתווך (עו"ד מכירה ~0.5% בלבד):</span>
+              <span class="font-mono">~10,500 ₪</span>
+            </div>
+            <div class="flex justify-between text-[var(--muted-foreground)]">
+              <span>(או הוצאות מכירה כולל מתווך 1.25% כפי שהנחנו בשמרנות במודל):</span>
+              <span class="font-mono">(26,250 ₪)</span>
+            </div>
+            <div class="flex justify-between pt-1.5 border-t border-[var(--card-border)] font-bold">
+              <span>סה"כ עלות כוללת מהכיס (נקודת האיזון במזומן!):</span>
+              <span class="font-mono text-[var(--warning)]">2,177,336 ₪ – 2,193,086 ₪</span>
+            </div>
+          </div>
+
+          <!-- Real Cash Profit / Loss at Different Sale Prices -->
+          <div class="font-bold text-sm pt-2">ב. כמה תרוויח או תפסיד באמת בכיס בכל מחיר מכירה ב-03/2028?</div>
+          <div class="space-y-1.5">
+            <div class="flex justify-between p-2 rounded bg-[var(--background)] border border-[var(--card-border)]">
+              <span>מכירה ב-<strong>2,100,000 ₪</strong> (תרחיש הבסיס השמרני):</span>
+              <span class="font-mono font-bold text-[var(--warning)]">-77,336 ₪ (ללא מתווך) | -93,086 ₪ (עם מתווך)</span>
+            </div>
+            <div class="flex justify-between p-2 rounded bg-[var(--background)] border border-[var(--card-border)]">
+              <span>מכירה ב-<strong>2,140,000 ₪</strong> (מחיר החוזה שלך):</span>
+              <span class="font-mono font-bold text-[var(--warning)]">-37,336 ₪ (רק הוצאות העסקה הנלוות)</span>
+            </div>
+            <div class="flex justify-between p-2 rounded bg-[var(--background)] border-2 border-[var(--success)]">
+              <span>מכירה ב-<strong>2,185,000 ₪</strong> (נקודת האיזון בכיס!):</span>
+              <span class="font-mono font-bold text-[var(--success)]">0 ₪ הפסד! (איזון מלא בכיס + 0 ₪ מס שבח)</span>
+            </div>
+            <div class="flex justify-between p-2 rounded bg-[var(--background)] border border-[var(--success)]">
+              <span>מכירה ב-<strong>2,215,000 ₪</strong> (ממוצע מדלן לשכונת כלניות):</span>
+              <span class="font-mono font-bold text-[var(--success)]">+21,914 ₪ עד +37,664 ₪ רווח נקי בכיס (ו-0 ₪ מס!)</span>
+            </div>
+            <div class="flex justify-between p-2 rounded bg-[var(--background)] border border-[var(--success)]">
+              <span>מכירה ב-<strong>2,265,000 ₪</strong> (מחירי 4 חד׳ בהכלניות 5):</span>
+              <span class="font-mono font-bold text-[var(--success)]">+71,914 ₪ עד +87,664 ₪ רווח נקי בכיס (ו-0 ₪ מס!)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Apartment 2: Ashkelon Full Breakdown + Combined Portfolio -->
+      <div class="space-y-4">
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 md:p-5 space-y-3">
+          <div class="border-b border-[var(--card-border)] pb-2">
+            <h3 class="text-base font-bold text-[var(--primary)]">🌊 דירה 2: אשקלון (הקונכיה 20, דירה 16 — מחיר למשתכן)</h3>
+            <p class="text-xs text-[var(--muted-foreground)]">פירוט עלות הרכישה, שחיקת המשכנתה והמזומן הנקי שמשתחרר ב-01/2028</p>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)] space-y-1.5">
+              <div class="flex justify-between">
+                <span>1. מחיר חוזה מקורי (23/12/2019):</span>
+                <span class="font-mono font-bold">1,015,965 ₪</span>
+              </div>
+              <div class="flex justify-between">
+                <span>2. הפרשי הצמדה למדד תשומות הבנייה ששולמו (דף תנועות מאוחד):</span>
+                <span class="font-mono">1,630 ₪</span>
+              </div>
+              <div class="flex justify-between font-bold">
+                <span>סה"כ שולם לקבלן באשקלון:</span>
+                <span class="font-mono">1,017,595 ₪</span>
+              </div>
+              <div class="flex justify-between text-[var(--success)]">
+                <span>3. מענק מותנה משרד השיכון (נמחק סופית ב-15/12/2027!):</span>
+                <span class="font-mono font-bold">-40,000 ₪ (חיסכון של 54,800 ₪ בסילוק!)</span>
+              </div>
+              <div class="flex justify-between pt-1.5 border-t border-[var(--card-border)] font-bold text-[var(--primary)]">
+                <span>עלות רכישה נטו לאחר המענק:</span>
+                <span class="font-mono">977,595 ₪</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)] space-y-1.5">
+              <div class="font-bold">שחיקת יתרת המשכנתה בבנק הפועלים עד המכירה ב-01/2028:</div>
+              <div class="flex justify-between">
+                <span>יתרת משכנתה בדוח 26/05/2026 (ללא המענק):</span>
+                <span class="font-mono">768,859 ₪</span>
+              </div>
+              <div class="flex justify-between">
+                <span>יתרת משכנתה משוערת ב-01/12/2026:</span>
+                <span class="font-mono">~748,700 ₪</span>
+              </div>
+              <div class="flex justify-between font-bold text-[var(--success)]">
+                <span>יתרת משכנתה לסילוק ב-01/2028 (אחרי מחיקת המענק ב-15/12/27!):</span>
+                <span class="font-mono">~703,800 ₪</span>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-lg bg-[var(--background)] border-2 border-[var(--success)] space-y-1.5">
+              <div class="font-bold text-sm text-[var(--success)]">תזרים מזומנים נטו שנכנס לחשבון הבנק ממכירת אשקלון ב-01/2028:</div>
+              <div class="flex justify-between">
+                <span>מחיר מכירה (תרחיש בסיס):</span>
+                <span class="font-mono font-bold">2,100,000 ₪</span>
+              </div>
+              <div class="flex justify-between text-[var(--success)]">
+                <span>מס שבח (פטור משפר דיור סעיף 49ג(1) + החלטת מיסוי 8838/21):</span>
+                <span class="font-mono font-bold">0 ₪ (רווח הון פטור של +1,082,405 ₪!)</span>
+              </div>
+              <div class="flex justify-between">
+                <span>פחות סילוק יתרת משכנתה בבנק הפועלים (01/2028):</span>
+                <span class="font-mono">-703,800 ₪</span>
+              </div>
+              <div class="flex justify-between">
+                <span>פחות הוצאות מכירה (1.25% עו"ד ותיווך):</span>
+                <span class="font-mono">-26,250 ₪</span>
+              </div>
+              <div class="flex justify-between pt-1.5 border-t border-[var(--card-border)] text-sm font-bold text-[var(--primary)]">
+                <span>מזומן נטו שנכנס לחשבון הבנק באשקלון (01/2028):</span>
+                <span class="font-mono">+1,369,950 ₪</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Combined Reconciliation Box -->
+        <div class="bg-[var(--card)] border-2 border-[var(--primary)] rounded-xl p-4 md:p-5 space-y-2 text-xs">
+          <h3 class="text-sm font-bold text-[var(--primary)]">🔗 איך מתחברות שתי הדירות יחד להון העצמי של 1,589,509 ₪ במודל?</h3>
+          <div class="space-y-1">
+            <div class="flex justify-between">
+              <span>1. מזומן נטו ממכירת אשקלון ב-01/2028 (בניכוי 11,154 ₪ פער שכ"ד-משכנתה ל-13 חודשים):</span>
+              <span class="font-mono font-bold">+1,358,796 ₪</span>
+            </div>
+            <div class="flex justify-between">
+              <span>2. עודף תזרימי שחוזר במכירת טירת הכרמל ב-03/2028 ב-2.10M ₪ (2,073,750 נטו פחות 1,933,000 יתרת קבלן ו-7,500 גישור):</span>
+              <span class="font-mono font-bold">+133,250 ₪</span>
+            </div>
+            <div class="flex justify-between pt-1 border-t border-[var(--card-border)] font-bold text-sm text-[var(--success)]">
+              <span>סה"כ מזומן נזיל ביד באפריל 2028 (ו-0 ₪ חוב משכנתאות!):</span>
+              <span class="font-mono">1,492,046 ₪</span>
+            </div>
+            <div class="flex justify-between text-[var(--muted-foreground)]">
+              <span>3. חיסכון ריבית מימון / תשואה אלטרנטיבית (4.3% שנתי) על ה-1.492M ₪ מאפריל 2028 עד ספטמבר 2029 (17 חודשים):</span>
+              <span class="font-mono">+97,463 ₪</span>
+            </div>
+            <div class="flex justify-between pt-1 border-t border-[var(--card-border)] font-bold text-sm text-[var(--primary)]">
+              <span>סה"כ הון עצמי נטו בספטמבר 2029 (חלופה 3א בתרחיש בסיס):</span>
+              <span class="font-mono">1,589,509 ₪</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== TAB 3: INTERACTIVE STEP-BY-STEP FLOWCHART ==================== -->
+  <section id="tab-flow" class="hidden space-y-5">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 md:p-5">
+      <h2 class="text-base font-bold mb-1">🔀 תרשים זרימה אינטראקטיבי שלב-אחרי-שלב (לחץ על כל צומת החלטה כדי לראות את המשמעות הכספית)</h2>
+      <p class="text-xs text-[var(--muted-foreground)] mb-4">
+        התרשים מפרק את ההחלטה ל-3 תחנות כרונולוגיות ברורות. לחץ על כל אחד מהמסלולים בכל תחנה כדי לפתוח את ההסבר המלא ואת ההשפעה בשקלים.
+      </p>
+
+      <div class="space-y-4">
+        <div class="border border-[var(--border)] rounded-xl p-4 bg-[var(--background)]">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">תחנה 1</span>
+            <h3 class="text-sm font-bold">מתי מוכרים ומסלקים את המשכנתה של הדירה באשקלון?</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div onclick="showFlowDetail('s1-early')" class="flow-node cursor-pointer p-3 rounded-lg border border-[var(--error)] bg-[var(--card)]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-[var(--error)]">❌ אופציה א׳: מכירה מוקדמת (03/2027)</span>
+                <span class="text-xs font-mono text-[var(--error)]">-54,800 ₪ קנס</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)]">
+                מכירה מיד בתום 5 שנים מטופס 4 של מחיר למשתכן (24/02/2027), לפני פקיעת המענק המותנה ב-15/12/2027.
+              </p>
+            </div>
+
+            <div onclick="showFlowDetail('s1-golden')" class="flow-node cursor-pointer p-3 rounded-lg border-2 border-[var(--success)] bg-[var(--card)]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-[var(--success)]">✅ אופציה ב׳ (חלון הזהב): 16/12/27–01/28</span>
+                <span class="text-xs font-mono text-[var(--success)]">0 ₪ קנס | 0 ₪ מס</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)]">
+                חתימת חוזה בסתיו 2027 כאשר סילוק המשכנתה נקבע לאחרי 15/12/2027. המענק (54.8K ₪) נמחק לחלוטין ורווח ההון (~1.08M ₪) פטור ממס שבח!
+              </p>
+            </div>
+
+            <div onclick="showFlowDetail('s1-keep')" class="flow-node cursor-pointer p-3 rounded-lg border border-[var(--error)] bg-[var(--card)]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-[var(--error)]">💣 אופציה ג׳: לא למכור את אשקלון בכלל</span>
+                <span class="text-xs font-mono text-[var(--error)]">-427,850 ₪ נזק מס</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)]">
+                ביטול הצהרת משפר דיור בטירת הכרמל (קנס 204,353 ₪ מס רכישה 8% רטרו׳) + כליאת 223,500 ₪ מס שבח באשקלון ברגע שרתמים תקבל טופס 4.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-center text-[var(--muted-foreground)] text-lg font-bold">⬇️</div>
+
+        <div class="border border-[var(--border)] rounded-xl p-4 bg-[var(--background)]">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">תחנה 2</span>
+            <h3 class="text-sm font-bold">איך מגשרים על פירעון הלוואת הקבלן בטירת הכרמל (1,498,000 ₪ ב-01/12/2027) והמסירה (01/03/2028)?</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div onclick="showFlowDetail('s2-clean')" class="flow-node cursor-pointer p-3 rounded-lg border-2 border-[var(--success)] bg-[var(--card)]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-[var(--success)]">✅ מסלול א׳ (מומלץ): גישור ל-30 יום וסגירה מכספי אשקלון</span>
+                <span class="text-xs font-mono text-[var(--success)]">מינימום ריבית</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)]">
+                פירעון מלא של משכנתת אשקלון ב-01/2028 (בלי לגרור!), והזרמת ~1.37M ₪ העודפים לסגירת רוב המימון של טירת הכרמל. משאיר חוב גישור קטן של ~565K ₪ בלבד עד טופס 4.
+              </p>
+            </div>
+
+            <div onclick="showFlowDetail('s2-grace')" class="flow-node cursor-pointer p-3 rounded-lg border border-[var(--warning)] bg-[var(--card)]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-[var(--warning)]">⚠️ מסלול ב׳ (רשת ביטחון): משכנתת גרייס חלקי על 1.93M ₪</span>
+                <span class="text-xs font-mono text-[var(--warning)]">אופציית גמישות עד 03/2029</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)]">
+                אם מתעכבים במכירת אשקלון: לוקחים גרייס חלקי (ריבית בלבד) בטירת הכרמל. מ-03/2028 שתי השכירויות יחד (10,250 ₪) מכסות את ריבית הגרייס, אך מפסידים ~2,200–3,000 ₪/חודש רווח נטו עד שאשקלון תימכר (חובה למכור עד 01/03/2029).
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-center text-[var(--muted-foreground)] text-lg font-bold">⬇️</div>
+
+        <div class="border border-[var(--border)] rounded-xl p-4 bg-[var(--background)]">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">תחנה 3</span>
+            <h3 class="text-sm font-bold">קבלת טופס 4 בטירת הכרמל (01/03/2028) — למכור מיד או לחכות 18 חודשים?</h3>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div onclick="showFlowDetail('s3-sell-now')" class="flow-node cursor-pointer p-3 rounded-lg border-2 border-[var(--success)] bg-[var(--card)]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-[var(--success)]">✅ אופציה א׳ (חלופה 3א): מכירה מיד בטופס 4</span>
+                <span class="text-xs font-mono text-[var(--success)]">+45.5K עד +85.7K ₪</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)]">
+                ביום טופס 4 פוקע סעיף 79 (לפי סעיף 65). מוכרים מיד בחישוב מס שבח רגיל: כי עלות הבסיס הצמודה למדד + הוצאות היא 2,325,090 ₪, השבח הריאלי הוא 0 והמס הוא 0 ₪! משחרר ~1.50M ₪ מזומן לרתמים ב-04/2028.
+              </p>
+            </div>
+
+            <div onclick="showFlowDetail('s3-wait-18')" class="flow-node cursor-pointer p-3 rounded-lg border border-[var(--warning)] bg-[var(--card)]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-[var(--warning)]">⏳ אופציה ב׳ (חלופה 1ב): להמתין 18 חודשים (09/2029)</span>
+                <span class="text-xs font-mono text-[var(--error)]">-45.5K עד -85.7K ₪</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)]">
+                המתנה ל"פטור דירה יחידה" שאינו חוסך שקל מס (כי ממילא אין שבח ריאלי עד 2.325M ₪), אך נועלת 1.5M ₪ הון עצמי ומכריחה לקחת משכנתת בנייה יקרה ברתמים. משתלם רק אם הדירה תימכר מעל 2.64M ₪!
+              </p>
+            </div>
+
+            <div onclick="showFlowDetail('s3-keep-tc')" class="flow-node cursor-pointer p-3 rounded-lg border border-[var(--border)] bg-[var(--card)]">
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold text-[var(--foreground)]">🏢 אופציה ג׳ (חלופה 3ב): להשאיר כנכס מניב</span>
+                <span class="text-xs font-mono text-[var(--muted-foreground)]">תשואת שכ"ד ~2.8%</span>
+              </div>
+              <p class="text-xs text-[var(--muted-foreground)]">
+                חוסך הוצאות מכירה (26.2K ₪) ונהנה מביקושי שכירות של מפוני פינוי-בינוי, אך מחייב מינוף גבוה (~2.2M ₪) לבניית הבית ברתמים בריבית של ~5.2% מול תשואת שכירות של 2.8%.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="flow-detail-box" class="p-4 rounded-xl bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
+          <div class="text-xs font-bold uppercase tracking-wider text-[var(--primary)] mb-1">פירוט צומת נבחר:</div>
+          <div id="flow-detail-title" class="text-sm font-bold mb-1">לחץ על כל אחת מהתיבות למעלה כדי לראות את התחשיב המלא והאסמכתאות החוזיות</div>
+          <div id="flow-detail-body" class="text-xs leading-relaxed">
+            המסלול הירוק (תחנה 1 אופציה ב׳ ⬅ תחנה 2 מסלול א׳ ⬅ תחנה 3 אופציה א׳) מייצר לך הון עצמי נזיל של ~1,500,000 ₪ כבר באפריל 2028 עם 0 ₪ חוב משכנתאות ו-0 ₪ מס שבח או קנסות.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== TAB 4: MASTER TIMELINE & LANDMINES ==================== -->
+  <section id="tab-timeline" class="hidden space-y-4">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 md:p-5">
+      <h2 class="text-base font-bold mb-1">📅 ציר הזמן המלא ומיפוי מוקשים חוזיים ומיסויים (2026–2030)</h2>
+      <p class="text-xs text-[var(--muted-foreground)] mb-4">
+        כל תאריך כאן מבוסס ישירות על סעיפי החוזים ודוחות הבנק בתיקיות שלך.
+      </p>
+
+      <div class="space-y-3">
+        <div class="flex flex-col md:flex-row gap-3 p-3.5 rounded-xl bg-[var(--background)] border border-[var(--card-border)]">
+          <div class="md:w-44 shrink-0">
+            <span class="px-2.5 py-1 rounded text-xs font-mono font-bold bg-[var(--secondary)] text-[var(--secondary-foreground)]">24/02/2027</span>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">אשקלון • מחיר למשתכן</div>
+          </div>
+          <div>
+            <div class="text-sm font-bold">תום 5 שנים מטופס 4 ומסירה באשקלון — ⚠️ מלכודת: לא למכור עדיין!</div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              חולפות 5 שנים ממסירת אשקלון (24/02/2022). למרות שמגבלת משרד השיכון פגה, <strong>אסור לסלק את המשכנתה באשקלון בתאריך זה</strong> משום שהמענק המותנה בבנק הפועלים (יתרה לסילוק ~54,800 ₪) פוקע רק ב-15/12/2027. המתנה של 9.5 חודשים נוספים בשכירות חוסכת 54,800 ₪ במזומן.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-3 p-3.5 rounded-xl bg-[var(--background)] border border-[var(--card-border)]">
+          <div class="md:w-44 shrink-0">
+            <span class="px-2.5 py-1 rounded text-xs font-mono font-bold bg-[var(--secondary)] text-[var(--secondary-foreground)]">01/08/2027</span>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">אשקלון • שכירות ושיווק</div>
+          </div>
+          <div>
+            <div class="text-sm font-bold">חידוש אופציית שוכר באשקלון ותחילת שיווק אשקלון למכירה</div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              לפי חוזה השכירות (סעיף 4 + 13.10), לשוכר אופציה ל-12 חודשים עד 31/07/2028 (5,000 ₪ עד 01/2028 ו-5,250 ₪ מ-02/2028). בסתיו 2027 מתחילים לשווק את אשקלון וחותמים על חוזה מכר שבו <strong>מועד סילוק המשכנתה והמסירה נקבע ל-20/12/2027–01/01/2028</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-3 p-3.5 rounded-xl bg-[var(--background)] border border-[var(--warning)]">
+          <div class="md:w-44 shrink-0">
+            <span class="px-2.5 py-1 rounded text-xs font-mono font-bold bg-[var(--warning)] text-[var(--background)]">01/12/2027</span>
+            <div class="text-xs text-[var(--warning)] font-semibold mt-1">טירת הכרמל • הלוואת קבלן</div>
+          </div>
+          <div>
+            <div class="text-sm font-bold">מועד פירעון חוזי של הלוואת הקבלן המסובסדת (1,498,000 ₪ במזרחי-טפחות)</div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              לפי נספח ב׳ לחוזה מ. אור פסגות (עמ׳ 90), מועד פירעון הלוואת הבלון הוא <strong>90 יום לפני מועד המסירה החוזי (01/03/2028)</strong>. אם הבנק דורש פירעון בדיוק ב-01/12/2027, לוקחים הלוואת גישור (פריים בולט) ל-30 יום בלבד עד לקבלת כספי מכירת אשקלון ב-01/2028.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-3 p-3.5 rounded-xl bg-[var(--background)] border-2 border-[var(--success)]">
+          <div class="md:w-44 shrink-0">
+            <span class="px-2.5 py-1 rounded text-xs font-mono font-bold bg-[var(--success)] text-[var(--background)]">15/12/2027</span>
+            <div class="text-xs text-[var(--success)] font-semibold mt-1">אשקלון • חלון הזהב!</div>
+          </div>
+          <div>
+            <div class="text-sm font-bold">🎉 מחיקת המענק המותנה באשקלון (54,800 ₪ הופכים ל-0 ₪!) ופתיחת חלון הסילוק</div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              לפי דוח יתרות הסילוק של בנק הפועלים (עמ׳ 2, הערה **), ב-15/12/2027 פוקעת ההתחייבות של מענק ה-40,000 ₪ (54,800 ₪ כולל הצמדה). החל מ-<strong>16/12/2027</strong> ניתן לסלק את משכנתת אשקלון מכספי הקונה ב-0 ₪ קנס מענק, ב-0 ₪ מס שבח (החלטת מיסוי 8838/21), ולהזרים ~1.37M ₪ עודפים לסגירת המימון בטירת הכרמל.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-3 p-3.5 rounded-xl bg-[var(--background)] border-2 border-[var(--primary)]">
+          <div class="md:w-44 shrink-0">
+            <span class="px-2.5 py-1 rounded text-xs font-mono font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">01/03/2028</span>
+            <div class="text-xs text-[var(--primary)] font-semibold mt-1">טירת הכרמל • טופס 4 ומסירה</div>
+          </div>
+          <div>
+            <div class="text-sm font-bold">🔑 טופס 4 ומסירת הכלניות 17: ביטול סעיף 79 ואפשרות מכירה מיידית ב-0 ₪ מס שבח</div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              במסירה משלמים את יתרת ה-20% (428,000 ₪ + 3,658 ₪ הפרש מע"מ 18% + חיבורים ≈ 435,000 ₪). לפי <strong>סעיף 65 לנספח השינויים (עמ׳ 52)</strong>, עם קבלת טופס 4 מתבטלות מגבלות ההסבה של הקבלן. מכיוון שעלות הבסיס המיסויית הצמודה למדד + הוצאות (סעיף 39) מגיעה ל-<strong>2,325,090 ₪</strong>, ניתן למכור את טירת הכרמל מיד בטופס 4 ב-0 ₪ מס שבח ולשחרר ~1.50M ₪ מזומן נזיל לבניית רתמים!
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-3 p-3.5 rounded-xl bg-[var(--background)] border border-[var(--card-border)]">
+          <div class="md:w-44 shrink-0">
+            <span class="px-2.5 py-1 rounded text-xs font-mono font-bold bg-[var(--secondary)] text-[var(--secondary-foreground)]">01/03/2029</span>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">רשות המסים • דדליין חוקי</div>
+          </div>
+          <div>
+            <div class="text-sm font-bold">מועד אחרון בהחלט למכירת אשקלון לפי סעיף 9(ג1ג)(2)(ב) (12 חודשים ממסירת טירת הכרמל)</div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              אם בחרת להיעזר בגרייס חלקי ולא למכור את אשקלון בינואר 2028, זהו הקו האדום האחרון למכירת אשקלון כדי לא לחטוף חיוב רטרואקטיבי של 204,353 ₪ מס רכישה (8%) על טירת הכרמל.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-3 p-3.5 rounded-xl bg-[var(--background)] border border-[var(--card-border)]">
+          <div class="md:w-44 shrink-0">
+            <span class="px-2.5 py-1 rounded text-xs font-mono font-bold bg-[var(--secondary)] text-[var(--secondary-foreground)]">24/06/2030</span>
+            <div class="text-xs text-[var(--muted-foreground)] mt-1">רתמים • מגרש 324</div>
+          </div>
+          <div>
+            <div class="text-sm font-bold">🏡 מועד סיום בנייה וקבלת אישור אכלוס (טופס 4) במגרש 324 ברתמים מול רמ"י</div>
+            <p class="text-xs text-[var(--muted-foreground)] mt-1 leading-relaxed">
+              לפי חוזה החכירה מול רמ"י (48 חודשים מ-24/06/2026). חובה להשלים את מכירת אשקלון (ורצוי גם טירת הכרמל) <strong>לפני</strong> קבלת טופס 4 ברתמים, כדי שרתמים לא תהפוך לדירה נוספת ששוללת פטור מס שבח.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== TAB 5: MARKET INTELLIGENCE ==================== -->
+  <section id="tab-market" class="hidden space-y-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 md:p-5 space-y-3">
+        <div class="flex items-center justify-between border-b border-[var(--card-border)] pb-2">
+          <h2 class="text-base font-bold">🏙️ טירת הכרמל: התחדשות עירונית ברחוב הכלניות (נתוני רשות המסים)</h2>
+          <span class="text-xs px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)]">363 עסקאות ברחוב</span>
+        </div>
+        <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+          שכונת כלניות היא חלוצת ההתחדשות העירונית בטירת הכרמל (6 פרויקטי תמ"א 38/2 הריסה ובנייה ל-10–15 קומות, שמגדילים את השכונה מ-503 ל-2,386 דירות). הנה עסקאות האמת שדווחו לרשות המסים ברחוב שלך:
+        </p>
+
+        <div class="space-y-2 text-xs">
+          <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)]">
+            <div class="font-bold text-[var(--primary)]">📍 הכלניות 17 (הבניין שלך — מ. אור פסגות, מסירה 03/2028):</div>
+            <ul class="list-disc list-inside mt-1 space-y-1 text-[var(--muted-foreground)]">
+              <li><strong>החוזה שלך (30/08/2024):</strong> דירה 39, קומה 8, 4 חד׳ (98 מ"ר + 15 מ"ר מרפסת + מחסן 4 מ"ר) — <span class="font-mono font-bold text-[var(--foreground)]">2,140,000 ₪</span> (כולל סבסוד הלוואת קבלן 70% ו-0% מדד תשומות).</li>
+              <li><strong>עסקה מ-23/02/2025 (הכלניות 17):</strong> 4 חדרים, קומה 3 — נמכרה ב-<span class="font-mono font-bold text-[var(--foreground)]">1,960,000 ₪</span>.</li>
+              <li><strong>עסקה מ-02/09/2025 (הכלניות 17):</strong> 3 חדרים, קומה 4 — נמכרה ב-<span class="font-mono font-bold text-[var(--foreground)]">1,765,000 ₪</span>.</li>
+            </ul>
+          </div>
+
+          <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)]">
+            <div class="font-bold text-[var(--foreground)]">📍 הכלניות 22 (פרויקט CLiCKa ממול — 15 קומות, אוכלס 2022–2025):</div>
+            <ul class="list-disc list-inside mt-1 space-y-1 text-[var(--muted-foreground)]">
+              <li><strong>עסקה מ-29/06/2026 (העדכנית ביותר ברחוב!):</strong> 4 חדרים, 94 מ"ר, <strong>קומה 8 (בדיוק הקומה שלך)</strong>, דירה מוכנה — <span class="font-mono font-bold text-[var(--foreground)]">1,985,000 ₪</span> (21,117 ₪/מ"ר).</li>
+              <li><strong>עסקה מ-26/09/2024:</strong> 4 חדרים, 98 מ"ר, קומה 13 — <span class="font-mono font-bold text-[var(--foreground)]">2,030,000 ₪</span> (20,714 ₪/מ"ר).</li>
+              <li><strong>מגמת דירות 5 חדרים (118 מ"ר) בהכלניות 22:</strong> ירדו משיא של <span class="font-mono">2,290,000 ₪</span> (02/2025) ל-<span class="font-mono">2,180,000 ₪</span> (12/2025) ול-<span class="font-mono font-bold text-[var(--warning)]">2,100,000 ₪</span> ב-3 עסקאות במאי 2026 (17,797 ₪/מ"ר).</li>
+            </ul>
+          </div>
+
+          <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)]">
+            <div class="font-bold text-[var(--foreground)]">📍 הכלניות 5 ו-7 (פרויקטי תמ"א 38/2 צמודים — עמרם את נידם):</div>
+            <ul class="list-disc list-inside mt-1 space-y-1 text-[var(--muted-foreground)]">
+              <li>עסקאות 4 חדרים ללא סבסוד כבד (סוף 2024): <span class="font-mono font-bold text-[var(--foreground)]">1,880,000 – 2,015,000 ₪</span>.</li>
+              <li>עסקאות 4 חדרים "על הנייר" למסירה 2028 עם הטבות מימון (03/2025 ו-07/2025): <span class="font-mono font-bold text-[var(--foreground)]">2,265,000 – 2,270,000 ₪</span>.</li>
+            </ul>
+          </div>
+
+          <div class="p-3 rounded-lg bg-[var(--secondary)] text-[var(--secondary-foreground)]">
+            <div class="font-bold mb-1">🔮 המגמה ל-2028–2030: בום שכירות מול תקרת מחיר במכירה</div>
+            <p class="leading-relaxed">
+              סביב שכונת כלניות אושרו ב-2025–2026 מתחמי פינוי-בינוי ענקיים (ויצמן-ז׳בוטינסקי 1,232 דירות, הרצל-מוצקין 1,280 דירות, בן צבי 734 דירות, גיורא 720 דירות, ומתחמים 7–8 עם 5,012 דירות). ב-2028 כשיהרסו את השיכונים הישנים סביבך, <strong>יהיה ביקוש חזק לשכירות מצד מפוני פינוי-בינוי</strong> (במימון היזמים), אבל <strong>מחירי המכירה יוגבלו (~2.10M–2.25M ₪)</strong> בגלל היצע אדיר של דירות חדשות "על הנייר" במבצעי קבלן.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-4 md:p-5 space-y-3">
+        <div class="flex items-center justify-between border-b border-[var(--card-border)] pb-2">
+          <h2 class="text-base font-bold">🌊 אשקלון: שכונת עיר ימים / רחוב הקונכיה (הקונכיה 20)</h2>
+          <span class="text-xs px-2 py-0.5 rounded bg-[var(--secondary)] text-[var(--secondary-foreground)]">קו ראשון/שני לים</span>
+        </div>
+        <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+          הדירה שלך בהקונכיה 20 (פרויקט "אשקלון על הים" / מחיר למשתכן, נמסרה 24/02/2022) היא דירת 4 חדרים מרווחת מאוד (106.12 מ"ר + מרפסת 13.71 מ"ר + מחסן 6.05 מ"ר + חניה) עם נוף לים.
+        </p>
+
+        <div class="space-y-2 text-xs">
+          <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)]">
+            <div class="font-bold text-[var(--primary)]">📍 עסקאות ומחירי שוק ברחוב הקונכיה ועיר ימים:</div>
+            <ul class="list-disc list-inside mt-1 space-y-1 text-[var(--muted-foreground)]">
+              <li><strong>עסקה מ-26/06/2026 (הקונכיה 18 — הבניין הצמוד!):</strong> דירת 3 חדרים, 79 מ"ר, קומה 1 (בנייה 2022) נמכרה ב-<span class="font-mono font-bold text-[var(--foreground)]">1,785,000 ₪</span> (<span class="font-mono font-bold">22,595 ₪/מ"ר</span>)!</li>
+              <li><strong>גזירת שווי לדירת 4 חדרים שלך (106.12 מ"ר + מרפסת ונוף לים):</strong> לפי מקדם שולי של ~20,000–21,000 ₪/מ"ר לדירת 4 חדרים עם נוף לים במיקום זה, השווי הריאלי נע בין <span class="font-mono font-bold text-[var(--foreground)]">2,050,000 ל-2,250,000 ₪</span> (תרחיש בסיס שמרני במודל: <span class="font-mono font-bold">2,100,000 ₪</span>).</li>
+            </ul>
+          </div>
+
+          <div class="p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)]">
+            <div class="font-bold text-[var(--foreground)]">📊 תמונת הרווח והמשכנתה באשקלון:</div>
+            <ul class="list-disc list-inside mt-1 space-y-1 text-[var(--muted-foreground)]">
+              <li><strong>מחיר רכישה מקורי (23/12/2019):</strong> <span class="font-mono">1,015,965 ₪</span> (1,017,595 ₪ כולל הצמדה בפועל).</li>
+              <li><strong>רווח הון ("שבח") כלוא בדירה:</strong> <span class="font-mono font-bold text-[var(--success)]">~1,082,000 ₪</span> — כולו <strong>פטור ב-100% ממס שבח</strong> אם תמכור לפני טופס 4 ברתמים ובתוך חלון משפר הדיור!</li>
+              <li><strong>יתרת משכנתה משוערת ל-01/2028 (בנק הפועלים):</strong> <span class="font-mono">~703,800 ₪</span> (אחרי מחיקת מענק ה-54,800 ₪ ב-15/12/2027).</li>
+              <li><strong>תזרים מזומנים נטו שישתחרר לכיסך במכירה ב-01/2028:</strong> <span class="font-mono font-bold text-[var(--primary)]">~1,370,000 ₪</span> נטו במזומן (לפי מחיר מכירה 2.10M ₪).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== TAB 6: DEDICATED LAWYER PAGE ==================== -->
+  <section id="tab-lawyer" class="hidden space-y-4">
+    <div class="bg-[var(--card)] border-2 border-[var(--primary)] rounded-xl p-4 md:p-6 space-y-5">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-[var(--card-border)] pb-4">
+        <div>
+          <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)]">מסמך עבודה משפטי ומיסויי</span>
+          <h2 class="text-base md:text-lg font-bold mt-1">⚖️ נייר עמדה ושאלון אימות לעו"ד מקרקעין ומיסוי</h2>
+          <p class="text-xs text-[var(--muted-foreground)]">
+            ריכוז העובדות, מספרי השומות, סעיפי החוזים וארבע הסוגיות המשפטיות לאישור סופי לפני נעילת לוח הזמנים ל-2027–2028.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 no-print">
+          <button onclick="copyLawyerText()" id="btn-copy-lawyer" class="px-3.5 py-2 rounded-lg text-xs font-bold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 transition">
+            📋 העתק נוסח הודעה לעו"ד (וואטסאפ / מייל)
+          </button>
+          <button onclick="window.print()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90 transition">
+            🖨️ הדפס / שמור כ-PDF לעו"ד
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <div class="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--card-border)] space-y-1.5">
+          <div class="font-bold text-sm text-[var(--primary)]">1. דירה קיימת — אשקלון ("הדירה הישנה")</div>
+          <div><strong>כתובת וזיהוי:</strong> הקונכיה 20, דירה 16, בניין B (גוש 2503 חלקה 4).</div>
+          <div><strong>מסלול ומועד רכישה:</strong> מחיר למשתכן, חוזה מיום <span class="font-mono">23/12/2019</span>, תמורה מקורית <span class="font-mono">1,015,965 ₪</span>.</div>
+          <div><strong>מועד טופס 4 ומסירה:</strong> <span class="font-mono">24/02/2022</span> (5 שנות איסור מכירה מסתיימות ב-<span class="font-mono font-bold">24/02/2027</span>).</div>
+          <div><strong>מענק מותנה בבנק הפועלים:</strong> קרן 40,000 ₪ (יתרה לסילוק ~54,800 ₪) — <strong>תאריך פקיעת התחייבות ומחיקת החוב: <span class="font-mono">15/12/2027</span></strong>.</div>
+          <div><strong>שכירות:</strong> מושכרת עד <span class="font-mono">31/07/2027</span> עם אופציה לשוכר עד <span class="font-mono">31/07/2028</span> (סעיף 13.10 מחייב שמירת תנאי השוכר במכירה).</div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--card-border)] space-y-1.5">
+          <div class="font-bold text-sm text-[var(--primary)]">2. דירה על הנייר — טירת הכרמל ("הדירה החדשה")</div>
+          <div><strong>כתובת ויזם:</strong> הכלניות 17, דירה 39, קומה 8 (גוש 10668 חלקה 54), יזם: מ. אור פסגות נדל"ן בע"מ.</div>
+          <div><strong>מועד חוזה ותמורה:</strong> <span class="font-mono">30/08/2024</span>, מחיר חוזה <span class="font-mono">2,140,000 ₪</span> (פטור 0% ממדד תשומות הבנייה לפי סעיף 80 לנספח השינויים).</div>
+          <div><strong>מימון ומועד מסירה:</strong> שולם 10% הון עצמי (<span class="font-mono">214,000 ₪</span>) + 70% הלוואת קבלן מסובסדת במזרחי-טפחות (<span class="font-mono">1,498,000 ₪</span>, מועד פירעון חוזי 90 יום לפני מסירה = <span class="font-mono">01/12/2027</span>). יתרת 20% במסירה החוזית: <span class="font-mono font-bold">01/03/2028</span>.</div>
+          <div><strong>דיווח מיסוי מקרקעין חיפה:</strong> שומה עצמית כ"משפר דיור" (מס׳ שומה <span class="font-mono font-bold">108245017</span>), שולם מס רכישה דירה יחידה ע"ס <span class="font-mono">5,644 ₪</span> ביום <span class="font-mono">04/11/2024</span>.</div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-[var(--background)] border border-[var(--card-border)] space-y-1.5">
+          <div class="font-bold text-sm text-[var(--primary)]">3. מגרש לבנייה עצמית — כפר רתמים</div>
+          <div><strong>זיהוי וסטטוס:</strong> מגרש 324 (תוכנית 615-0757765), חוזה פיתוח/חכירה מול רמ"י מיום <span class="font-mono">19/08/2025</span>.</div>
+          <div><strong>דדליין רמ"י לסיום בנייה וטופס 4:</strong> <span class="font-mono font-bold">24/06/2030</span> (48 חודשים מהמועד הקובע 24/06/2026).</div>
+          <div><strong>משמעות תזרימית ומיסויית:</strong> נדרש הון עצמי נזיל של ~1.5M ₪ במהלך 2028 לטובת הבנייה. כל עוד הבית ברתמים בבנייה וטרם הגיע לטופס 4, הוא בגדר "קרקע" ואינו נספר כדירת מגורים.</div>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="text-sm font-bold border-b border-[var(--card-border)] pb-2">
+          📋 4 השאלות לאימות עורך הדין (ניתן לסמן כאן את תשובת עוה"ד כשתתקבל כדי לעדכן את המודל):
+        </h3>
+
+        <div class="p-4 rounded-xl bg-[var(--background)] border border-[var(--card-border)] space-y-2">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div class="text-sm font-bold text-[var(--foreground)]">
+              שאלה 1: סטטוס הקפאת שומת מס הרכישה בטירת הכרמל (שומה <span class="font-mono">108245017</span>)
+            </div>
+            <select id="law-q1" onchange="updateLawyerVerdict()" class="text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">
+              <option value="ok">✅ עוה"ד אישר: ההקפאה מעודכנת ל-12 חודשים מהמסירה (01/03/2029)</option>
+              <option value="need_ext">⚠️ עוה"ד יגיש כעת בקשת הארכת הקפאה לפי מועד המסירה החוזי (01/03/2028)</option>
+            </select>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+            <strong>השאלה לעו"ד:</strong> מהו התאריך המדויק שמוזן כרגע במחשב מיסוי מקרקעין חיפה כמועד אחרון למכירת אשקלון תחת שומה 108245017? האם מעודכן אצלם שמועד המסירה החוזי מהקבלן הוא 01/03/2028 (כך שחלון המכירה לפי סעיף 9(ג1ג)(2)(ב) פתוח עד 12 חודשים מהמסירה בפועל, קרי 01/03/2029), או שנדרש להגיש להם כעת מכתב הארכת הקפאה בצירוף אישור הקבלן?
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[var(--background)] border border-[var(--card-border)] space-y-2">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div class="text-sm font-bold text-[var(--foreground)]">
+              שאלה 2: אימות "המכירה הכפולה" ב-2028 (אשקלון ב-01/2028 ⬅ טירת הכרמל בטופס 4 ב-03/2028)
+            </div>
+            <select id="law-q2" onchange="updateLawyerVerdict()" class="text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">
+              <option value="immediate">✅ עוה"ד אישר: ניתן למכור את טירת הכרמל מיד לאחר טופס 4 ומסירה</option>
+              <option value="hold_3m">⏳ עוה"ד המליץ להמתין 3–6 חודשים מקבלת החזקה בטירת הכרמל לפני מכירתה</option>
+            </select>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+            <strong>השאלה לעו"ד:</strong> אנו מתכננים למכור תחילה את אשקלון בינואר 2028 (לאחר 15/12/2027) בפטור ממס שבח לפי סעיף 49ג(1) והחלטת מיסוי 8838/21, ולדווח למיסוי מקרקעין חיפה על קיום תנאי משפר הדיור. לאחר מכן, עם קבלת טופס 4 ומסירה בטירת הכרמל (03/2028), אנו שוקלים למכור את טירת הכרמל <strong>ללא בקשת פטור דירה יחידה</strong> אלא בשומה רגילה של 25% על השבח הריאלי (שבה מס השבח הוא 0 ₪ עד מחיר של ~2,325,000 ₪ לאור הצמדת העלות למדד וניכוי הוצאות לפי סעיף 39). האם מכירת טירת הכרמל סמוך לאחר קבלת טופס 4 (ואחרי שאשקלון כבר נמכרה) בטוחה לחלוטין גם לעניין שמירת מדרגות מס הרכישה של דירה יחידה (5,644 ₪) בטירת הכרמל, או שנדרש פרק זמן מינימלי של החזקה בטירת הכרמל אחרי המסירה? וכן אימות שהמגרש ברתמים שקוף כל עוד לא קיבל טופס 4.
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[var(--background)] border border-[var(--card-border)] space-y-2">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div class="text-sm font-bold text-[var(--foreground)]">
+              שאלה 3: חוזה מ. אור פסגות — ביטול סעיף 79 בטופס 4 (סעיף 65) ומועד פירעון הלוואת הקבלן (01/12/2027)
+            </div>
+            <select id="law-q3" onchange="updateLawyerVerdict()" class="text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">
+              <option value="at_delivery">✅ ניתן לפרוע את הלוואת הקבלן במסירה (03/2028) ואין מגבלת מכירה בטופס 4</option>
+              <option value="dec_bridge">⚠️ הבנק דורש פירעון ב-01/12/2027 (ניקח גישור ל-30 יום עד כספי אשקלון)</option>
+            </select>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+            <strong>השאלה לעו"ד:</strong> (א) לפי סעיף 65 לנספח השינויים (עמ׳ 52 לחוזה), מיום קבלת טופס 4 מתבטלות מגבלות ההסבה של סעיף 20.3. נא אישורך שעם קבלת טופס 4 מתבטלת גם מגבלת מחיר המחירון שבסעיף 79 ושאין עמלת הסבה לקבלן במכירה לצד ג׳ לאחר טופס 4. (ב) לפי נספח ב׳ (עמ׳ 90), מועד פירעון הלוואת הקבלן (1,498,000 ₪ במזרחי-טפחות) הוא 90 יום לפני המסירה החוזית (01/12/2027). האם בפועל ניתן לתאם מול הקבלן/הבנק פירעון צמוד לקבלת טופס 4 והמסירה (אחרי 15/12/2027)?
+          </p>
+        </div>
+
+        <div class="p-4 rounded-xl bg-[var(--background)] border border-[var(--card-border)] space-y-2">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div class="text-sm font-bold text-[var(--foreground)]">
+              שאלה 4: אשקלון — איסור מכירה "מחיר למשתכן" (24/02/2027) והמחאת חוזה השכירות (סעיף 13.10)
+            </div>
+            <select id="law-q4" onchange="updateLawyerVerdict()" class="text-xs p-1.5 rounded border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)]">
+              <option value="clear">✅ אין מניעה לחתום חוזה מכר בסתיו 2027 עם מסירה וסילוק משכנתה ב-01/2028</option>
+            </select>
+          </div>
+          <p class="text-xs text-[var(--muted-foreground)] leading-relaxed">
+            <strong>השאלה לעו"ד:</strong> נא אישורך שמגבלת 5 השנים של מחיר למשתכן באשקלון אכן פגה ב-24/02/2027 (5 שנים מטופס 4/מסירה מיום 24/02/2022), ושאין מניעה לחתום על חוזה מכירה של אשקלון בסתיו 2027 כאשר המסירה לקונה וסילוק המשכנתה יבוצעו בינואר 2028 (לאחר פקיעת מענק ה-40,000 ₪ ב-15/12/2027), תוך המחאת חוזה השכירות של השוכר (המסתיים ב-31/07/2028) לקונה.
+          </p>
+        </div>
+      </div>
+
+      <div id="lawyer-verdict-box" class="p-4 rounded-xl bg-[var(--secondary)] text-[var(--secondary-foreground)] border border-[var(--border)]">
+        <div class="text-xs font-bold text-[var(--primary)] uppercase mb-1">סיכום השפעת תשובות עוה"ד על תוכנית הפעולה:</div>
+        <div id="lawyer-verdict-text" class="text-xs leading-relaxed">
+          כל 4 הנקודות מסונכרנות עם חלופה 3א: מוכרים את אשקלון עם סילוק משכנתה ב-20/12/2027–01/01/2028 (0 ₪ מס שבח, 0 ₪ קנס מענק), ומוכרים את טירת הכרמל בטופס 4 ב-03/2028 (0 ₪ מס שבח, 5,644 ₪ מס רכישה).
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function fmt(n) {
+      return Math.round(n).toLocaleString('he-IL') + ' ₪';
+    }
+
+    function switchTab(tabId) {
+      const tabs = ['sim', 'costs', 'flow', 'timeline', 'market', 'lawyer'];
+      tabs.forEach(t => {
+        document.getElementById('tab-' + t).classList.add('hidden');
+        document.getElementById('tab-btn-' + t).classList.remove('active');
+      });
+      document.getElementById('tab-' + tabId).classList.remove('hidden');
+      document.getElementById('tab-btn-' + tabId).classList.add('active');
+    }
+
+    function resetSliders() {
+      document.getElementById('inp-ash-price').value = 2100000;
+      document.getElementById('inp-tc-price').value = 2100000;
+      document.getElementById('inp-rate').value = 4.3;
+      document.getElementById('inp-tc-rent').value = 5000;
+      document.getElementById('inp-grace-months').value = 8;
+      updateSim();
+    }
+
+    function computeModel(ashPrice, tcPrice, annualRatePct, tcRent, graceMonthsAfterJan28) {
+      const r = annualRatePct / 100;
+      const sellCostRate = 0.0125;
+      const tcTaxCostBasis = 2325090;
+      const ashSellNet = ashPrice * (1 - sellCostRate);
+      const tcCapitalGainTaxAtForm4 = tcPrice > tcTaxCostBasis ? (tcPrice - tcTaxCostBasis) * 0.25 : 0;
+
+      const rateDelta = (annualRatePct - 4.3) / 100;
+      const ashDelta = (ashPrice - 2100000) * (1 - sellCostRate);
+      const tcDelta = (tcPrice - 2100000) * (1 - sellCostRate);
+      const rentDelta18m = (tcRent - 5000) * 18;
+
+      const base3A_equity = 1589509;
+      const eq3A = base3A_equity
+        + ashDelta * (1 + r * 1.65)
+        + (tcDelta - tcCapitalGainTaxAtForm4) * (1 + r * 1.5)
+        + 1495000 * rateDelta * 1.5;
+      const dead3A = 95947 + tcCapitalGainTaxAtForm4 + (ashPrice + tcPrice - 4200000) * sellCostRate;
+
+      const base3B_equity = 1570274;
+      const eq3B = base3B_equity
+        + ashDelta * (1 + r * 1.65)
+        + (tcPrice - 2100000)
+        + rentDelta18m
+        - 570000 * rateDelta * 1.5;
+      const dead3B = 108078 + 570000 * rateDelta * 1.5 + (ashPrice - 2100000) * sellCostRate;
+
+      const base1B_equity = 1544024;
+      const eq1B = base1B_equity
+        + ashDelta * (1 + r * 1.65)
+        + tcDelta
+        + rentDelta18m
+        - 570000 * rateDelta * 1.5;
+      const dead1B = 134328 + 570000 * rateDelta * 1.5 + (ashPrice + tcPrice - 4200000) * sellCostRate;
+
+      const ashProceeds = ashSellNet;
+      const monthlyMarginalInterestOnAshProceeds = ashProceeds * (r / 12);
+      const monthlyMarginalNetCost = Math.max(0, monthlyMarginalInterestOnAshProceeds - 5250);
+      const gracePenaltyTotal = graceMonthsAfterJan28 * monthlyMarginalNetCost;
+      const eq1A = eq1B - gracePenaltyTotal;
+      const dead1A = dead1B + gracePenaltyTotal;
+
+      const eq1BEarly = eq1B - 32746;
+      const dead1BEarly = 159334 + (ashPrice + tcPrice - 4200000) * sellCostRate;
+
+      const base2_equity = 1319915;
+      const eq2 = base2_equity
+        + (ashPrice - 2100000)
+        + (tcDelta - tcCapitalGainTaxAtForm4)
+        - 700000 * rateDelta * 1.5;
+      const dead2 = 365816 + tcCapitalGainTaxAtForm4;
+
+      return {
+        tcCapitalGainTaxAtForm4,
+        monthlyMarginalNetCost,
+        scenarios: [
+          {
+            code: '3א',
+            name: 'חלופה 3א (המומלצת): מכירת אשקלון ב-01/2028 + מכירת טירת כרמל בטופס 4 (03/2028)',
+            equity: eq3A,
+            deadweight: dead3A,
+            taxExtra: tcCapitalGainTaxAtForm4,
+            grantPenalty: 0,
+            tag: 'מזומן נזיל ~1.50M ₪ לרתמים כבר ב-04/2028 | 0 ₪ חוב',
+            color: 'var(--success)'
+          },
+          {
+            code: '3ב',
+            name: 'חלופה 3ב: מכירת אשקלון ב-01/2028 + השארת טירת כרמל כנכס מניב',
+            equity: eq3B,
+            deadweight: dead3B,
+            taxExtra: 0,
+            grantPenalty: 0,
+            tag: 'ההון נעול בטירת כרמל (דורש משכנתת בנייה גבוהה ברתמים)',
+            color: 'var(--primary)'
+          },
+          {
+            code: '1ב',
+            name: 'חלופה 1ב: מכירת אשקלון ב-01/2028 + החזקת טירת כרמל 18 חודשים עד 09/2029',
+            equity: eq1B,
+            deadweight: dead1B,
+            taxExtra: 0,
+            grantPenalty: 0,
+            tag: 'ההון משתחרר לרתמים רק ב-09/2029 (9 חודשים לפני דדליין רמ"י)',
+            color: 'var(--warning)'
+          },
+          {
+            code: '1א',
+            name: `חלופה 1א (גרייס): דחיית מכירת אשקלון ב-${graceMonthsAfterJan28} חודשים + מכירת טירת כרמל ב-09/2029`,
+            equity: eq1A,
+            deadweight: dead1A,
+            taxExtra: 0,
+            grantPenalty: 0,
+            tag: 'שיא חוב כפול 2.62M ₪ בתקופת החפיפה',
+            color: 'var(--warning)'
+          },
+          {
+            code: '1ב-מוקדם',
+            name: 'חלופה 1ב-מוקדם: מכירת אשקלון ב-03/2027 (לפני 15/12/2027) + החזקת טירת כרמל',
+            equity: eq1BEarly,
+            deadweight: dead1BEarly,
+            taxExtra: 0,
+            grantPenalty: 54800,
+            tag: 'שורפת 54,800 ₪ קנס שבירת מענק מותנה בבנק הפועלים!',
+            color: 'var(--error)'
+          },
+          {
+            code: '2',
+            name: 'חלופה 2: השארת אשקלון לטווח ארוך + מכירת טירת כרמל (ספיגת 8% מס רכישה)',
+            equity: eq2,
+            deadweight: dead2,
+            taxExtra: 204353 + tcCapitalGainTaxAtForm4,
+            grantPenalty: 0,
+            tag: 'קנס מס רכישה רטרואקטיבי 204,353 ₪ + כליאת מס שבח באשקלון!',
+            color: 'var(--error)'
+          }
+        ]
+      };
+    }
+
+    function updateSim() {
+      const ashPrice = Number(document.getElementById('inp-ash-price').value);
+      const tcPrice = Number(document.getElementById('inp-tc-price').value);
+      const rate = Number(document.getElementById('inp-rate').value);
+      const tcRent = Number(document.getElementById('inp-tc-rent').value);
+      const graceMonths = Number(document.getElementById('inp-grace-months').value);
+
+      document.getElementById('val-ash-price').textContent = fmt(ashPrice);
+      document.getElementById('val-tc-price').textContent = fmt(tcPrice);
+      document.getElementById('val-rate').textContent = rate.toFixed(1) + '%';
+      document.getElementById('val-tc-rent').textContent = fmt(tcRent);
+      document.getElementById('val-grace-months').textContent =
+        graceMonths === 0 ? '0 חודשים (מכירה ב-01/2028)' : `${graceMonths} חודשים`;
+
+      const res = computeModel(ashPrice, tcPrice, rate, tcRent, graceMonths);
+
+      const sorted = [...res.scenarios].sort((a, b) => b.equity - a.equity);
+      const winner = sorted[0];
+      const sc1B = res.scenarios.find(s => s.code === '1ב');
+      const sc3A = res.scenarios.find(s => s.code === '3א');
+
+      document.getElementById('kpi-winner-title').textContent = `${winner.code}: ${winner.name.split(':')[0]}`;
+      document.getElementById('kpi-winner-equity').textContent = fmt(winner.equity);
+      const diffVs1B = sc3A.equity - sc1B.equity;
+      document.getElementById('kpi-winner-diff').textContent =
+        diffVs1B >= 0
+          ? `+${fmt(diffVs1B)} לטובת מכירה בטופס 4 (3א) מול המתנת 18 חודשים (1ב)`
+          : `${fmt(diffVs1B)} מול המתנת 18 חודשים (1ב)`;
+
+      // Real cash profit/loss on Tirat Carmel (vs 2,177,336 out of pocket without broker)
+      const tcRealCashPnl = tcPrice - 2177336 - res.tcCapitalGainTaxAtForm4;
+      const pnlEl = document.getElementById('kpi-tc-cash-pnl');
+      pnlEl.textContent = (tcRealCashPnl >= 0 ? '+' : '') + fmt(tcRealCashPnl);
+      pnlEl.className = tcRealCashPnl >= 0
+        ? 'text-xl font-mono font-bold text-[var(--success)] mt-1'
+        : 'text-xl font-mono font-bold text-[var(--warning)] mt-1';
+
+      if (res.tcCapitalGainTaxAtForm4 === 0) {
+        document.getElementById('kpi-tc-tax-note').textContent = 'מס שבח: 0 ₪ (מגן מס משוערך 2,325,090 ₪)!';
+        document.getElementById('kpi-tc-tax-note').className = 'text-xs text-[var(--success)] mt-0.5';
+      } else {
+        document.getElementById('kpi-tc-tax-note').textContent = `מס שבח: ${fmt(res.tcCapitalGainTaxAtForm4)} (25% רק מעל 2.325M ₪)`;
+        document.getElementById('kpi-tc-tax-note').className = 'text-xs text-[var(--warning)] mt-0.5';
+      }
+
+      // Ashkelon gain KPI
+      const ashGain = ashPrice - 1017595;
+      document.getElementById('kpi-ash-gain').textContent = '+' + fmt(ashGain);
+
+      const totalRent = 5250 + tcRent;
+      const totalGraceInterest = Math.round((2623764 * (rate / 100)) / 12);
+      document.getElementById('grace-total-rent').textContent = '+' + fmt(totalRent) + ' / חודש';
+      document.getElementById('grace-rent-breakdown').textContent = `אשקלון: 5,250 ₪ + טירת כרמל: ${fmt(tcRent)}`;
+      document.getElementById('grace-total-interest').textContent = '-' + fmt(totalGraceInterest) + ' / חודש';
+      document.getElementById('grace-marginal-loss').textContent = '-' + fmt(res.monthlyMarginalNetCost) + ' / חודש';
+
+      const maxEq = Math.max(...res.scenarios.map(s => s.equity));
+      const container = document.getElementById('scenarios-bars');
+      container.innerHTML = '';
+
+      res.scenarios.forEach(s => {
+        const widthPct = Math.max(25, Math.min(100, Math.round((s.equity / maxEq) * 100)));
+        const diffFromTop = s.equity - winner.equity;
+        const diffLabel = diffFromTop === 0 ? '🏆 המנצחת' : `${fmt(diffFromTop)} מהמנצחת`;
+
+        const row = document.createElement('div');
+        row.className = 'p-3 rounded-lg bg-[var(--background)] border border-[var(--card-border)] space-y-1.5';
+        row.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="font-bold text-[var(--foreground)]">${s.name}</div>
+            <div class="flex items-center gap-3 font-mono">
+              <span class="text-[var(--muted-foreground)]">${diffLabel}</span>
+              <span class="text-sm font-bold text-[var(--foreground)]">${fmt(s.equity)}</span>
+            </div>
+          </div>
+          <div class="w-full h-3 rounded-full bg-[var(--secondary)] overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-300" style="width: ${widthPct}%; background-color: ${s.color};"></div>
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--muted-foreground)]">
+            <span>${s.tag}</span>
+            <span>סך כסף שרוף (ריבית+מס+קנס+עו"ד): <strong class="font-mono text-[var(--foreground)]">${fmt(s.deadweight)}</strong></span>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    const flowDetails = {
+      's1-early': {
+        title: '❌ אופציה א׳: מכירה וסילוק משכנתת אשקלון במרץ 2027 — הפסד של 54,800 ₪ חינם',
+        body: 'בדוח יתרות הסילוק של בנק הפועלים (liabilitiesDetailsPdf.pdf עמ׳ 2 הערה **) רשום מפורשות כי הלוואת המענק המותנה (40,000 ₪ קרן, ~54,800 ₪ יתרה לסילוק כולל הצמדה) מסתיימת ב-15/12/2027. סילוק המשכנתה באשקלון אפילו יום אחד לפני 15/12/2027 מחייב אותך לפרוע לבנק 54,800 ₪ שממילא נמחקים לאפס ב-16/12/2027!'
+      },
+      's1-golden': {
+        title: '✅ אופציה ב׳ ("חלון הזהב" 16/12/2027 – 31/01/2028) — חיסכון של 54,800 ₪ מענק + ~223,500 ₪ מס שבח',
+        body: 'חותמים על חוזה המכר של אשקלון בסתיו 2027 (אוקטובר-נובמבר 2027), וקובעים בלוח התשלומים שהתשלום של הקונה שמסלק את משכנתת בנק הפועלים יבוצע ב-20/12/2027–01/01/2028. כך המענק נמחק ב-15/12/2027, השבח על אשקלון (~1.08M ₪) פטור ב-100% ממס שבח לפי סעיף 49ג(1) והחלטת מיסוי 8838/21, ותנאי "משפר הדיור" של שומת טירת הכרמל (108245017) מתקיים במלואו!'
+      },
+      's1-keep': {
+        title: '💣 אופציה ג׳: השארת אשקלון לטווח ארוך — נזק מיסויי מצטבר של ~427,850 ₪',
+        body: 'אי-מכירת אשקלון עד 01/03/2029 (12 חודשים ממסירת טירת הכרמל) מפעילה שתי פצצות מס: (1) חיוב רטרואקטיבי של 8% מס רכישה על טירת הכרמל = 165,556 ₪ קרן + ~38,800 ₪ ריבית והצמדה מאוגוסט 2024 = 204,353 ₪ במזומן. (2) ברגע שהבית במגרש 324 ברתמים יקבל טופס 4 (עד 2030), יהיו לך שתי דירות והדירה באשקלון תאבד לצמיתות את פטור דירה יחידה — מה שילכוד בה חבות מס שבח של ~223,500 ₪ על רווחי מחיר למשתכן!'
+      },
+      's2-clean': {
+        title: '✅ מסלול א׳: פירעון מלא של משכנתת אשקלון (ללא גרירה) והזרמת ~1.37M ₪ לטירת הכרמל',
+        body: '69% ממשכנתת אשקלון (514K ₪) היא בריבית משתנה לא צמודה של 4.86%, והמסלולים הצמודים (234K ₪ ב-1.6% + מדד) חוסכים פחות מ-800 ₪ בשנה אך הופכים אותך ללקוח שבוי. לכן פורעים את משכנתת אשקלון במלואה ב-01/2028, ומזרימים את ה-1.37M ₪ העודפים לסגירת הלוואת הגישור בטירת הכרמל.'
+      },
+      's2-grace': {
+        title: '⚠️ מסלול ב׳: גרייס חלקי (תשלום ריבית בלבד) כרשת ביטחון עד מכירת אשקלון',
+        body: 'אם השוק באשקלון דורש עוד מספר חודשי שיווק ב-2028, לוקחים בטירת הכרמל משכנתה בגרייס חלקי (ריבית בלבד). ממרץ 2028 נכנסות שתי שכירויות (5,250 ₪ מאשקלון + 5,000 ₪ מטירת הכרמל = 10,250 ₪/חודש) שמכסות כמעט ב-100% את ריבית הגרייס של שתי הדירות יחד (~9,800 ₪/חודש). זה נותן לך אורך נשימה עד 01/03/2029 ללא חנק בעו"ש.'
+      },
+      's3-sell-now': {
+        title: '✅ אופציה א׳ (חלופה 3א): מכירת טירת הכרמל מיד בטופס 4 (03/2028) ב-0 ₪ מס שבח!',
+        body: 'סעיף 65 לנספח השינויים מבטל את מגבלות ההסבה של הקבלן ביום קבלת טופס 4. בחישוב מס שבח רגיל (ללא בקשת פטור דירה יחידה!), מחיר החוזה (2,143,658 ₪ כולל הפרש מע"מ) מוצמד למדד המחירים לצרכן מיום כל תשלום (+139,515 ₪) ומתווספות לו הוצאות מוכרות לפי סעיף 39 (+41,917 ₪ עו"ד, מס רכישה ותיווך) = עלות בסיס מיסויית של 2,325,090 ₪! לכן בכל מחיר מכירה עד 2,325,090 ₪ המס הוא 0 ₪ עגול, ויוצאים באפריל 2028 עם ~1.50M ₪ מזומן נזיל לבניית רתמים.'
+      },
+      's3-wait-18': {
+        title: '⏳ אופציה ב׳ (חלופה 1ב): המתנה של 18 חודשים אחרי טופס 4 (עד 09/2029) — שריפת 45K עד 85K ₪',
+        body: 'להחזיק את טירת הכרמל 18 חודשים רק כדי לקבל "פטור דירה יחידה" לפי סעיף 49ב(2) זה לקבל פטור על מס שממילא שווה 0 ₪! בזמן הזה ההון העצמי שלך (~1.5M ₪) נעול בטירת הכרמל בתשואת שכירות של ~2.8%, ואתה נאלץ לקחת משכנתת בנייה עצמית יקרה ברתמים בריבית של ~4.5%–5.5%.'
+      },
+      's3-keep-tc': {
+        title: '🏢 אופציה ג׳ (חלופה 3ב): השארת טירת הכרמל כנכס מניב לטווח ארוך (לאחר מכירת אשקלון)',
+        body: 'אם תחליטו שאתם רוצים להחזיק דירה להשקעה בנוסף לבית ברתמים — השארת טירת הכרמל עדיפה ב-250,359 ₪ על פני השארת אשקלון! כך אתם מממשים את רווחי אשקלון בפטור ממס שבח, שומרים על מס רכישה של 5,644 ₪ בטירת הכרמל, ונשארים עם דירה חדשה משנתון 2028 שבסיס המס שלה גבוה (2.325M ₪).'
+      }
+    };
+
+    function showFlowDetail(key) {
+      const item = flowDetails[key];
+      if (!item) return;
+      document.getElementById('flow-detail-title').textContent = item.title;
+      document.getElementById('flow-detail-body').textContent = item.body;
+    }
+
+    function updateLawyerVerdict() {
+      const q1 = document.getElementById('law-q1').value;
+      const q2 = document.getElementById('law-q2').value;
+      const q3 = document.getElementById('law-q3').value;
+      let msgs = [];
+
+      if (q1 === 'need_ext') {
+        msgs.push('📌 פעולה מיידית לעו"ד: לשלוח למיסוי מקרקעין חיפה הודעת עדכון מועד מסירה חוזי (01/03/2028) בשומה 108245017 כדי להאריך רשמית את ההקפאה עד 01/03/2029.');
+      } else {
+        msgs.push('✅ שומת מס רכישה בטירת הכרמל (108245017) מוגנת ומעודכנת עד 12 חודשים מהמסירה בפועל.');
+      }
+
+      if (q2 === 'hold_3m') {
+        msgs.push('⏳ תזמון מכירת טירת הכרמל: לפי המלצת עוה"ד, נחזיק בטירת הכרמל 3–6 חודשים אחרי טופס 4 (עד קיץ 2028) לפני חתימת המכירה שלה — עלות ההמתנה הקצרה הזו זניחה (~7,500 ₪ נטו) והיא מבצרת ב-100% את מדרגות מס הרכישה של דירה יחידה.');
+      } else {
+        msgs.push('✅ מכירת טירת הכרמל בטופס 4 (03/2028) לאחר מכירת אשקלון ב-01/2028 מאושרת ב-0 ₪ מס שבח ו-0 ₪ תוספת מס רכישה.');
+      }
+
+      if (q3 === 'at_delivery') {
+        msgs.push('🎉 בונוס מימוני: פירעון הלוואת הקבלן (1.498M ₪) מתבצע במסירה (03/2028) ולא ב-01/12/2027 — אין צורך אפילו בהלוואת גישור בדצמבר 2027! כספי מכירת אשקלון מינואר 2028 יופקדו ישירות לסגירת הלוואת הקבלן במסירה.');
+      } else {
+        msgs.push('🏦 גישור דצמבר 2027: נעמיד ב-01/12/2027 הלוואת גישור בולט ל-30 יום בלבד לסגירת הלוואת הקבלן, ונפרע אותה בינואר 2028 מכספי מכירת אשקלון (לאחר מחיקת המענק ב-15/12/2027).');
+      }
+
+      document.getElementById('lawyer-verdict-text').innerHTML = msgs.join('<br/>');
+    }
+
+    function copyLawyerText() {
+      const text = `היי,
+אנחנו עושים תכנון פיננסי ומיסויי מדויק לגבי שתי הדירות שלנו והמגרש לבנייה עצמית ברתמים:
+1. אשקלון (הקונכיה 20, דירה 16 — מחיר למשתכן, חוזה מ-23/12/2019 ב-1,015,965 ש"ח, נמסרה ב-24/02/2022, מענק מותנה 40,000 ש"ח בבנק הפועלים שפוקע ב-15/12/2027).
+2. טירת הכרמל (הכלניות 17, דירה 39, קומה 8 — מ. אור פסגות, חוזה מ-30/08/2024 ב-2,140,000 ש"ח, פטור 0% ממדד תשומות, מסירה חוזית 01/03/2028, דווחה כמשפר דיור בשומה 108245017 ושולם מס רכישה 5,644 ש"ח).
+3. כפר רתמים (מגרש 324 לבנייה עצמית — חוזה רמ"י מ-19/08/2025, דדליין טופס 4 עד 24/06/2030).
+
+אשמח שתאמת לי 4 נקודות ממוקדות כדי שנוכל לנעול תאריכים:
+
+1. סטטוס הקפאת שומת מס רכישה בטירת הכרמל (שומה 108245017):
+מהו התאריך המדויק שמופיע כרגע במערכת מיסוי מקרקעין חיפה כמועד אחרון למכירת הדירה באשקלון? האם מעודכן אצלם שמועד המסירה החוזי מהקבלן הוא 01/03/2028 (כך שיש לנו זמן למכור את אשקלון עד 12 חודשים מהמסירה בפועל לפי סעיף 9(ג1ג)(2)(ב)), או שצריך להגיש להם בקשת הארכת הקפאה כדי שלא תצא דרישת תשלום אוטומטית?
+
+2. תכנון המכירה של שתי הדירות ב-2028 (מכירת אשקלון ב-01/2028 ואז מכירת טירת הכרמל בטופס 4 ב-03/2028):
+הכוונה שלנו היא למכור קודם את אשקלון בינואר 2028 (מיד אחרי 15/12/2027, מועד מחיקת המענק המותנה בבנק הפועלים) בפטור ממס שבח כמשפר דיור (לפי סעיף 49ג(1) והחלטת מיסוי 8838/21).
+לאחר מכירת אשקלון ודיווחה לרשות המסים, עם קבלת טופס 4 ומסירת החזקה בטירת הכרמל (מרץ 2028), אנחנו שוקלים למכור את הדירה בטירת הכרמל כדי להזרים את ההון העצמי לבנייה ברתמים — ללא בקשת פטור דירה יחידה בטירת הכרמל, אלא בחישוב מס שבח רגיל (שבו ממילא אין שבח ריאלי לתשלום לאור הצמדת עלות הרכישה למדד וניכוי הוצאות לפי סעיף 39, שמביאים את עלות הבסיס לכ-2.325 מיליון ש"ח).
+א. האם מכירת טירת הכרמל סמוך לאחר קבלת טופס 4 (ואחרי שאשקלון כבר נמכרה ודווחה) בטוחה לחלוטין גם לעניין שמירת מס הרכישה של דירה יחידה (5,644 ש"ח) בטירת הכרמל, או שנדרש פרק זמן מינימלי בין קבלת החזקה בטירת הכרמל לבין מכירתה?
+ב. אימות שכל עוד הבנייה במגרש ברתמים לא הגיעה לטופס 4, המגרש ברתמים אינו נספר כדירת מגורים ואינו פוגע בפטור ממס שבח במכירת אשקלון.
+
+3. חוזה הקבלן בטירת הכרמל (סעיף 65 מול 79 ומועד פירעון הלוואת הקבלן):
+א. לפי סעיף 65 לנספח השינויים בחוזה מ. אור פסגות, מיום קבלת טופס 4 מתבטלות מגבלות ההסבה של סעיף 20.3. האם זה אומר שברגע שיש טופס 4 גם מגבלת מחיר המחירון שבסעיף 79 בטלה לחלוטין ונוכל למכור בשוק החופשי ללא מגבלה וללא עמלת הסבה לקבלן?
+ב. בנספח ב' לחוזה רשום שפירעון הלוואת הקבלן (1,498,000 ש"ח במזרחי-טפחות) הוא 90 יום לפני מועד המסירה החוזי (כלומר 01/12/2027). האם בפועל הפירעון נדרש 90 יום מראש או שניתן לפרוע אותה סמוך לקבלת טופס 4 והמסירה (אחרי 15/12/2027)?
+
+4. אשקלון — מחיר למשתכן וחוזה השכירות:
+רק לוודא שמגבלת 5 השנים של מחיר למשתכן באשקלון אכן פגה ב-24/02/2027 (5 שנים מטופס 4/מסירה), ושאין מניעה לחתום על חוזה מכירה של אשקלון בסתיו 2027 (עם מסירה לקונה וסילוק משכנתה בינואר 2028, תוך המחאת חוזה השכירות הקיים שמסתיים ביולי 2028 לקונה).
+
+תודה רבה!`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btn-copy-lawyer');
+        btn.textContent = '✅ הועתק ללוח! (אפשר להדביק בוואטסאפ/מייל)';
+        setTimeout(() => {
+          btn.textContent = '📋 העתק נוסח הודעה לעו"ד (וואטסאפ / מייל)';
+        }, 3000);
+      });
+    }
+
+    updateSim();
+  </script>
+</body>
+</html>
